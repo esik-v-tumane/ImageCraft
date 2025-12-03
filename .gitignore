@@ -1,0 +1,24 @@
+# IDE configs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# EXEs
+imagecraft
+*.exe
+*.out
+
+# Backups
+*.bak
+*.backup
+
+# Intermediate files
+*.o
+*.so
+*.a
+
+# Other stuff
+.clang-format
+int/
