@@ -1,24 +1,23 @@
-# IDE configs
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# Автоматически сгенерированные файлы для LSP и сборки
+compile_commands.json
+compile_flags.txt
 
-# EXEs
-imagecraft
-*.exe
-*.out
-
-# Backups
-*.bak
-*.backup
-
-# Intermediate files
+# Промежуточные файлы компиляции
+int/
 *.o
 *.so
 *.a
 
-# Other stuff
-.clang-format
-int/
+# Исполняемый файл проекта
+imagecraft
+*.exe
+
+# Резервные копии
+*.bak
+*.backup
+*~
+
+# Временные файлы редактора
+*.swp
+*.swo
+*.un~
