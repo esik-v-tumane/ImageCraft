@@ -3,6 +3,6 @@
 
 void printhelp();
 
-void parse_args(int argc, char **argv, char **ifile, char **ofile);
+void parse_args(int argc, char** argv, char** ifile, char** ofile);
 
 #endif // !ARGS_PARSER_H

@@ -1,29 +1,23 @@
 ImageCraft - BMP Image Processor
 ===============================
 
-Usage:
+Использование:
   imagecraft <input.bmp> [output.bmp
 
-Options:
-  -h, --help           Show this help message
-  -v, --version        Show version information
-  -i, --info <file>    Show information about BMP file
-  -g, --grayscale      Convert to grayscale
-  -r, --rotate <deg>   Rotate image (90, 180, 270)
-  -f, --flip <axis>    Flip image (horizontal, vertical)
-  -c, --crop x y w h   Crop image
+Опции:
+  -h, --help           Показать это сообщение
+  -v, --version        Версия
+  -i, --info <file>    Информация о bmp файле
+  -g, --grayscale      Черно-белое
+  -r, --rotate <deg>   Повернуть на 90, 180, 270 градусов
+  -f, --flip <axis>    Отразить по горизонтали / вертикали
+  -c, --crop x y w h   Обрезать изображение
 
-Examples:
+Примеры:
   imagecraft input.bmp output.bmp
   imagecraft --info sample.bmp
   imagecraft -g -r 90 input.bmp rotated_gray.bmp
 
-Supported formats:
-  - 24-bit BMP without compression
-  - BITMAPINFOHEADER DIB header
-
-Project structure:
-  assets/     - Input/output images
-  src/        - Source code
-  include/    - Header files
-  aux/        - Additional resources
+Формат BMP:
+  - 24-битный BMP без сжатия
+  - Заголовок BITMAPINFOHEADER DIB

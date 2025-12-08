@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "help.h"
 
@@ -12,12 +11,12 @@ void printhelp(void) {
         printf("Use --help for more information\n"); // TODO: Реализовать --help
         return;
     }
-    
+
     // Читаем и выводим файл построчно
     char buffer[256];
     while (fgets(buffer, sizeof(buffer), help_file)) {
         printf("%s", buffer);
     }
-    
+
     fclose(help_file);
 }
