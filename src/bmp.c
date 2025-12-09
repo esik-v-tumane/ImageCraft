@@ -6,7 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Вспомогательная функция для вычисления размера строки с выравниванием
+// Вспомогательная функция для вычисления размера строки с
+// выравниванием
 static uint32_t calculate_row_size(int32_t width) {
     // Размер строки в байтах должен быть кратен 4
     uint32_t row_size = width * 3; // 3 байта на пиксель (RGB)
@@ -30,7 +31,8 @@ BMPImage* bmp_create(int32_t width, int32_t height) {
     image->file_header.signature = 0x4D42; // 'BM'
     image->file_header.reserved1 = 0;
     image->file_header.reserved2 = 0;
-    image->file_header.data_offset = sizeof(BMPFileHeader) + sizeof(BMPInfoHeader);
+    image->file_header.data_offset =
+        sizeof(BMPFileHeader) + sizeof(BMPInfoHeader);
 
     // Заполняем информационный заголовок
     image->info_header.header_size = sizeof(BMPInfoHeader);
@@ -46,19 +48,24 @@ BMPImage* bmp_create(int32_t width, int32_t height) {
 
     // Вычисляем размер строки с учетом выравнивания
     uint32_t row_size = calculate_row_size(width);
-    image->info_header.image_size = row_size * (height < 0 ? -height : height);
-    image->file_header.file_size = image->file_header.data_offset + image->info_header.image_size;
+    image->info_header.image_size =
+        row_size * (height < 0 ? -height : height);
+    image->file_header.file_size =
+        image->file_header.data_offset +
+        image->info_header.image_size;
 
     // Выделяем память для массива указателей на строки
     int32_t abs_height = height < 0 ? -height : height;
-    image->pixels = (RGBPixel**)malloc(abs_height * sizeof(RGBPixel*));
+    image->pixels =
+        (RGBPixel**)malloc(abs_height * sizeof(RGBPixel*));
     if (!image->pixels) {
         free(image);
         return NULL;
     }
 
     // Выделяем память для всех пикселей
-    image->pixels[0] = (RGBPixel*)malloc(abs_height * width * sizeof(RGBPixel));
+    image->pixels[0] =
+        (RGBPixel*)malloc(abs_height * width * sizeof(RGBPixel));
     if (!image->pixels[0]) {
         free(image->pixels);
         free(image);
@@ -71,7 +78,11 @@ BMPImage* bmp_create(int32_t width, int32_t height) {
     }
 
     // Зануляем все пиксели (черный цвет)
-    memset(image->pixels[0], 0, abs_height * width * sizeof(RGBPixel));
+    memset(
+        image->pixels[0],
+        0,
+        abs_height * width * sizeof(RGBPixel)
+    );
 
     return image;
 }
@@ -85,7 +96,8 @@ BMPImage* bmp_load(const char* filename) {
 
     // Читаем файловый заголовок
     BMPFileHeader file_header;
-    if (fread(&file_header, sizeof(BMPFileHeader), 1, file) != 1) {
+    if (fread(&file_header, sizeof(BMPFileHeader), 1, file) !=
+        1) {
         fclose(file);
         return NULL;
     }
@@ -98,7 +110,8 @@ BMPImage* bmp_load(const char* filename) {
 
     // Читаем DIB заголовок
     BMPInfoHeader info_header;
-    if (fread(&info_header, sizeof(BMPInfoHeader), 1, file) != 1) {
+    if (fread(&info_header, sizeof(BMPInfoHeader), 1, file) !=
+        1) {
         fclose(file);
         return NULL;
     }
@@ -110,7 +123,8 @@ BMPImage* bmp_load(const char* filename) {
     }
 
     // Проверяем, что это 24-битное изображение без сжатия
-    if (info_header.bits_per_pixel != 24 || info_header.compression != 0) {
+    if (info_header.bits_per_pixel != 24 ||
+        info_header.compression != 0) {
         fclose(file);
         return NULL;
     }
@@ -137,7 +151,8 @@ BMPImage* bmp_load(const char* filename) {
     int32_t abs_height = height < 0 ? -height : height;
 
     // Выделяем память для массива указателей на строки
-    image->pixels = (RGBPixel**)malloc(abs_height * sizeof(RGBPixel*));
+    image->pixels =
+        (RGBPixel**)malloc(abs_height * sizeof(RGBPixel*));
     if (!image->pixels) {
         free(image);
         fclose(file);
@@ -145,7 +160,8 @@ BMPImage* bmp_load(const char* filename) {
     }
 
     // Выделяем память для всех пикселей
-    image->pixels[0] = (RGBPixel*)malloc(abs_height * width * sizeof(RGBPixel));
+    image->pixels[0] =
+        (RGBPixel*)malloc(abs_height * width * sizeof(RGBPixel));
     if (!image->pixels[0]) {
         free(image->pixels);
         free(image);
@@ -176,7 +192,8 @@ BMPImage* bmp_load(const char* filename) {
         return NULL;
     }
 
-    // Определяем порядок строк (в BMP снизу вверх, если высота положительная)
+    // Определяем порядок строк (в BMP снизу вверх, если высота
+    // положительная)
     int start_row, end_row, step;
     if (height > 0) {
         // Изображение снизу вверх
@@ -188,7 +205,8 @@ BMPImage* bmp_load(const char* filename) {
         start_row = 0;
         end_row = abs_height;
         step = 1;
-        height = -height; // Делаем высоту положительной для упрощения
+        height = -height; // Делаем высоту положительной для
+                          // упрощения
     }
 
     // Читаем строки
@@ -203,8 +221,10 @@ BMPImage* bmp_load(const char* filename) {
         // Копируем пиксели из буфера строки
         for (int32_t col = 0; col < width; col++) {
             image->pixels[row][col].blue = row_buffer[col * 3];
-            image->pixels[row][col].green = row_buffer[col * 3 + 1];
-            image->pixels[row][col].red = row_buffer[col * 3 + 2];
+            image->pixels[row][col].green =
+                row_buffer[col * 3 + 1];
+            image->pixels[row][col].red =
+                row_buffer[col * 3 + 2];
         }
     }
 
@@ -214,21 +234,31 @@ BMPImage* bmp_load(const char* filename) {
 }
 
 // Сохранение BMP изображения в файл
-bool bmp_save(BMPImage* image, const char* filename) {
+int bmp_save(BMPImage* image, const char* filename) {
     if (!image || !filename) {
-        return false;
+        return IC_BMP_ERROR_SAVING_FILE;
     }
 
     FILE* file = fopen(filename, "wb");
     if (!file) {
-        return false;
+        return IC_ERROR_OPENING_FILE;
     }
 
     // Записываем заголовки
-    if (fwrite(&image->file_header, sizeof(BMPFileHeader), 1, file) != 1 ||
-        fwrite(&image->info_header, sizeof(BMPInfoHeader), 1, file) != 1) {
+    if (fwrite(
+            &image->file_header,
+            sizeof(BMPFileHeader),
+            1,
+            file
+        ) != 1 ||
+        fwrite(
+            &image->info_header,
+            sizeof(BMPInfoHeader),
+            1,
+            file
+        ) != 1) {
         fclose(file);
-        return false;
+        return IC_BMP_ERROR_WRITING_HEADER;
     }
 
     // Вычисляем размер строки с учетом выравнивания
@@ -241,7 +271,7 @@ bool bmp_save(BMPImage* image, const char* filename) {
     uint8_t* row_buffer = (uint8_t*)calloc(row_size, 1);
     if (!row_buffer) {
         fclose(file);
-        return false;
+        return IC_BMP_ERROR_ALLOCATING_BUFFER;
     }
 
     // Определяем порядок записи строк
@@ -264,21 +294,23 @@ bool bmp_save(BMPImage* image, const char* filename) {
         // Копируем пиксели в буфер строки
         for (int32_t col = 0; col < width; col++) {
             row_buffer[col * 3] = image->pixels[row][col].blue;
-            row_buffer[col * 3 + 1] = image->pixels[row][col].green;
-            row_buffer[col * 3 + 2] = image->pixels[row][col].red;
+            row_buffer[col * 3 + 1] =
+                image->pixels[row][col].green;
+            row_buffer[col * 3 + 2] =
+                image->pixels[row][col].red;
         }
 
         // Записываем строку с выравниванием
         if (fwrite(row_buffer, 1, row_size, file) != row_size) {
             free(row_buffer);
             fclose(file);
-            return false;
+            return IC_BMP_ERROR_WRITING_ROW;
         }
     }
 
     free(row_buffer);
     fclose(file);
-    return true;
+    return ALL_OK;
 }
 
 // Очистка памяти, занятой изображением
@@ -295,7 +327,14 @@ void bmp_free(BMPImage* image) {
 }
 
 // Установка цвета пикселя
-void bmp_set_pixel(BMPImage* image, int32_t x, int32_t y, uint8_t red, uint8_t green, uint8_t blue) {
+void bmp_set_pixel(
+    BMPImage* image,
+    int32_t x,
+    int32_t y,
+    uint8_t red,
+    uint8_t green,
+    uint8_t blue
+) {
     if (!image || !image->pixels) {
         return;
     }
@@ -308,7 +347,8 @@ void bmp_set_pixel(BMPImage* image, int32_t x, int32_t y, uint8_t red, uint8_t g
         return;
     }
 
-    // Если высота положительная, изображение хранится снизу вверх
+    // Если высота положительная, изображение хранится снизу
+    // вверх
     int32_t row = (height > 0) ? (abs_height - 1 - y) : y;
 
     image->pixels[row][x].red = red;
@@ -317,8 +357,9 @@ void bmp_set_pixel(BMPImage* image, int32_t x, int32_t y, uint8_t red, uint8_t g
 }
 
 // Получение цвета пикселя
-RGBPixel bmp_get_pixel(const BMPImage* image, int32_t x, int32_t y) {
-    RGBPixel pixel = {0, 0, 0};
+RGBPixel
+bmp_get_pixel(const BMPImage* image, int32_t x, int32_t y) {
+    RGBPixel pixel = { 0, 0, 0 };
 
     if (!image || !image->pixels) {
         return pixel;
@@ -332,7 +373,8 @@ RGBPixel bmp_get_pixel(const BMPImage* image, int32_t x, int32_t y) {
         return pixel;
     }
 
-    // Если высота положительная, изображение хранится снизу вверх
+    // Если высота положительная, изображение хранится снизу
+    // вверх
     int32_t row = (height > 0) ? (abs_height - 1 - y) : y;
 
     return image->pixels[row][x];
@@ -345,7 +387,10 @@ BMPImage* bmp_copy(const BMPImage* src) {
     }
 
     // Создаем новое изображение такого же размера
-    BMPImage* dst = bmp_create(src->info_header.width, src->info_header.height);
+    BMPImage* dst = bmp_create(
+        src->info_header.width,
+        src->info_header.height
+    );
     if (!dst) {
         return NULL;
     }
@@ -375,7 +420,7 @@ int bmp_is_valid_24bit(const char* filename) {
 
     FILE* file = fopen(filename, "rb");
     if (!file) {
-        return IC_BMP_ERROR_OPENING_FILE;
+        return IC_ERROR_OPENING_FILE;
     }
 
     // Читаем сигнатуру
@@ -409,7 +454,8 @@ int bmp_is_valid_24bit(const char* filename) {
     }
 
     // Читаем bits_per_pixel
-    if (fseek(file, 28, SEEK_SET) != 0) { // смещение до bits_per_pixel
+    if (fseek(file, 28, SEEK_SET) !=
+        0) { // смещение до bits_per_pixel
         fclose(file);
         return IC_BMP_ERROR_INVALID_BPP;
     }
@@ -432,21 +478,59 @@ void bmp_print_info(const BMPImage* image) {
     }
 
     printf("=== BMP Image Info ===\n");
-    printf("Signature: 0x%X ('%c%c')\n", image->file_header.signature, image->file_header.signature & 0xFF,
-           image->file_header.signature >> 8);
-    printf("File size: %u bytes\n", image->file_header.file_size);
-    printf("Data offset: %u bytes\n", image->file_header.data_offset);
-    printf("Header size: %u bytes\n", image->info_header.header_size);
-    printf("Image dimensions: %d x %d pixels\n", image->info_header.width, image->info_header.height);
-    printf("Bits per pixel: %d\n", image->info_header.bits_per_pixel);
-    printf("Compression: %u (0 = BI_RGB, no compression)\n", image->info_header.compression);
-    printf("Image data size: %u bytes\n", image->info_header.image_size);
+    printf(
+        "Signature: 0x%X ('%c%c')\n",
+        image->file_header.signature,
+        image->file_header.signature & 0xFF,
+        image->file_header.signature >> 8
+    );
+    printf(
+        "File size: %u bytes\n",
+        image->file_header.file_size
+    );
+    printf(
+        "Data offset: %u bytes\n",
+        image->file_header.data_offset
+    );
+    printf(
+        "Header size: %u bytes\n",
+        image->info_header.header_size
+    );
+    printf(
+        "Image dimensions: %d x %d pixels\n",
+        image->info_header.width,
+        image->info_header.height
+    );
+    printf(
+        "Bits per pixel: %d\n",
+        image->info_header.bits_per_pixel
+    );
+    printf(
+        "Compression: %u (0 = BI_RGB, no compression)\n",
+        image->info_header.compression
+    );
+    printf(
+        "Image data size: %u bytes\n",
+        image->info_header.image_size
+    );
     printf("Colors used: %u\n", image->info_header.colors_used);
-    printf("Colors important: %u\n", image->info_header.colors_important);
+    printf(
+        "Colors important: %u\n",
+        image->info_header.colors_important
+    );
 
-    int32_t abs_height = image->info_header.height < 0 ? -image->info_header.height : image->info_header.height;
+    int32_t abs_height = image->info_header.height < 0
+        ? -image->info_header.height
+        : image->info_header.height;
 
-    printf("Orientation: %s\n", image->info_header.height > 0 ? "bottom-to-top" : "top-to-bottom");
-    printf("Memory used: %lu bytes\n", abs_height * image->info_header.width * sizeof(RGBPixel));
+    printf(
+        "Orientation: %s\n",
+        image->info_header.height > 0 ? "bottom-to-top"
+                                      : "top-to-bottom"
+    );
+    printf(
+        "Memory used: %lu bytes\n",
+        abs_height * image->info_header.width * sizeof(RGBPixel)
+    );
     printf("========================\n");
 }

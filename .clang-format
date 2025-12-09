@@ -1,14 +1,30 @@
-# Основной стиль, на основе которого будем настраивать
 BasedOnStyle: LLVM
-
-# Использование пробелов вместо табов (ваше основное требование)
+BreakBeforeBraces: Attach
 UseTab: Never
 IndentWidth: 4
+ColumnLimit: 65
 
-# Дополнительные рекомендованные настройки для читаемости
-ColumnLimit: 120               # Ограничение длины строки
-BreakBeforeBraces: Attach      # Стиль переноса фигурных скобок (присоединение)
-AllowShortFunctionsOnASingleLine: None  # Не разрешать короткие функции в одну строку
-PointerAlignment: Left         # Звёздочка у указателей прилегает к имени: int *ptr;
-SortIncludes: true             # Автоматически сортировать #include
-SpaceBeforeParens: ControlStatements  # Ставить пробел перед скобками в if/for/while
+# =========== КЛЮЧЕВЫЕ НАСТРОЙКИ ДЛЯ МАССИВОВ ===========
+BinPackParameters: false
+BinPackArguments: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowAllArgumentsOnNextLine: false
+PenaltyBreakBeforeFirstCallParameter: 1000
+Cpp11BracedListStyle: false
+BreakConstructorInitializers: BeforeColon
+
+# =========== ИСПРАВЛЕНИЕ ВЫРАВНИВАНИЯ ===========
+AlignAfterOpenBracket: BlockIndent  # <-- ИЗМЕНЕНИЕ ЗДЕСЬ!
+ContinuationIndentWidth: 4
+
+# Остальные настройки
+BreakBeforeBinaryOperators: None
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakBeforeMultilineStrings: true
+AlignOperands: false
+PointerAlignment: Left
+SortIncludes: true
+SpaceBeforeParens: ControlStatements
+IndentCaseLabels: true

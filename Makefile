@@ -138,8 +138,12 @@ clean-lsp:
 # Очистка билда
 clean-build: $(TARGET) clean-int
 
+# Очистка вывода команды
+clean-output:
+	rm -rf output.bmp
+
 # Полная очистка проекта
-clean: clean-int clean-lsp
+clean: clean-int clean-lsp clean-output
 	rm -f $(TARGET)
 
 # Вывод справки

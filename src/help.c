@@ -8,7 +8,11 @@ void printhelp(void) {
         // Если файл не найден, выводим встроенный help
         printf("ImageCraft - BMP Image Processor\n");
         printf("Usage: imagecraft <input.bmp> [output.bmp]\n");
-        printf("Use --help for more information\n"); // TODO: Реализовать --help
+        printf(
+            "Use --help for more information\n"
+        ); // TODO:
+           // Реализовать
+           // --help
         return;
     }
 
