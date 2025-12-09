@@ -21,3 +21,6 @@ imagecraft
 *.swp
 *.swo
 *.un~
+
+# Прочее
+output.bmp
