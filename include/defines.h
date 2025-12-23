@@ -1,6 +1,19 @@
 #ifndef IC_DEFINES
 #define IC_DEFINES
 
+// Пути и названия файлов по умолчанию
+#ifdef _WIN32
+#define SLASH "\\"
+#else
+#define SLASH "/"
+#endif
+
+#define SAVE_DIR "tmp"
+#define OUTFILE "output.bmp"
+
+#define INDEX_WIDTH 0
+#define INDEX_HEIGHT 1 - INDEX_WIDTH
+
 #define ALL_OK 0b0
 
 // Ошибки работы с файлами
