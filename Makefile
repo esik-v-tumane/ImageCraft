@@ -1,6 +1,6 @@
 # Компилятор и флаги
 CC = gcc
-CFLAGS = -std=c99 -Iinclude -Wall -Wextra
+CFLAGS = -std=c99 -Iinclude -Wall -Wextra -lm
 RELEASE_FLAGS = -O2
 DEBUG_FLAGS = -g -O0
 

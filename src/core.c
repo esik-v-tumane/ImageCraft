@@ -2,36 +2,29 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/types.h>
 
 #include "args_parser.h"
 #include "bmp.h"
-#include "convolution.h"
 #include "core.h"
 #include "defines.h"
 #include "filters.h"
 #include "help.h"
-
-static int create_output_directory(const char* path) {
-    struct stat st = { 0 };
-    if (stat(path, &st) == -1) {
-// Директория не существует, создаём её
-#ifdef _WIN32
-        return mkdir(path);
-#else
-        return mkdir(path, 0755); // права на чтение/запись для
-                                  // владельца
-#endif
-    }
-    return 0; // Директория уже существует
-}
+#include "paths.h"
 
 int imagecraft(int argc, char** argv) {
     char *ifile = NULL, *ofile = NULL;
-    Filter* filter = (Filter*)malloc(sizeof(Filter));
+    Filter* filter_list = NULL;
     int parse_result =
-        parse_args(argc, argv, &ifile, &ofile, filter);
+        parse_args(argc, argv, &ifile, &ofile, &filter_list);
+
+    if (parse_result != 0) {
+        fprintf(
+            stderr,
+            "[Error] Ошибка обработка аргументов. Adiós!\n"
+        );
+        exit(1);
+    }
 
     if (argc == 1) {
         printhelp();
@@ -64,7 +57,7 @@ int imagecraft(int argc, char** argv) {
                     IC_MESSAGE_BMP_ERROR_INVALID_SIGNATURE;
             else if (error == IC_BMP_ERROR_INVALID_BPP)
                 error_code = IC_MESSAGE_BMP_ERROR_INVALID_BPP;
-            else if (error == IC_BMP_ERROR_INVALID_DIB)
+            else // if (error == IC_BMP_ERROR_INVALID_DIB)
                 error_code = IC_MESSAGE_BMP_ERROR_INVALID_DIB;
 
             fprintf(stderr, "%s)\n", error_code);
@@ -83,81 +76,104 @@ int imagecraft(int argc, char** argv) {
         return 1;
     }
 
-    bmp_print_info(image);
+    // bmp_print_info(image);
 
-    Kernel* w = NULL;
+    int filters_applied = apply_filters(&image, filter_list);
 
-    float matrix[3][3] = { { -255, -255, -255 },
-                           { -255, 2040, -255 },
-                           { -255, -255, -255 } };
-    float* rows[3];
-    for (int i = 0; i < 3; i++)
-        rows[i] = matrix[i];
+    // Результат применения фильтров
+    if (filters_applied < 0) {
+        // Ошибка применения фильтров
+        fprintf(
+            stderr,
+            "[Error] Ошибка применения фильтров на шаге %d\n",
+            -filters_applied
+        );
 
-    w = kernel_create(3, rows);
-
-    if (!w) {
-        fprintf(stderr, "[Error] Не удалось создать ядро\n");
+        // Очистка памяти
         bmp_free(image);
+        free_filter_list(filter_list);
+
         return 1;
-    }
-
-    printf("\n=== Применение ядра ===\n");
-    printf("Создано ядро:\n");
-    kernel_print(w);
-    printf("Сумма ядра: %f\n", w->normalizer);
-
-    // Применение свёртки
-    printf("\nПрименяю свёртку...\n");
-    BMPImage* result = convolute(image, w);
-
-    if (!result) {
-        fprintf(stderr, "[Error] Свёртка не удалась\n");
-        kernel_free(w);
-        bmp_free(image);
-        return 1;
+    } else if (filters_applied > 0) {
+        printf(
+            "[Info] Успешно применено фильтров: %d\n",
+            filters_applied
+        );
+    } else {
+        printf("[Info] Фильтры не применялись\n");
     }
 
     // Сохранение результата
     if (!ofile) {
         // Если выходной файл не указан, используем OUTFILE
-        ofile = SLASH SAVE_DIR SLASH OUTFILE;
+        char default_path[1024];
+        snprintf(
+            default_path,
+            sizeof(default_path),
+            "%s%s%s",
+            SAVE_DIR,
+            SLASH,
+            OUTFILE
+        );
+        ofile = ic_strdup(default_path); // Делаем копию строки
         printf(
-            "\nВыходной файл не указан, сохраняю в "
+            "\n[Success] Выходной файл не указан, сохраняю в "
             "'%s'\n",
             ofile
         );
+    } else {
+        // Пользователь указал путь, делаем копию для
+        // безопасности
+        ofile = ic_strdup(ofile);
     }
 
-    // Создаём директорию SAVE_DIR, если её нет
-    const char* dir_path = SLASH SAVE_DIR;
-    if (create_output_directory(dir_path) != 0) {
-        fprintf(
-            stderr,
-            "[Error] Не удалось создать директорию '%s'\n",
-            dir_path
-        );
-        bmp_free(result);
-        kernel_free(w);
-        bmp_free(image);
-        return 1;
+    // Извлекаем директорию из пути и создаем её
+    char* output_dir = get_directory_from_path(ofile);
+
+    // Проверяем, не является ли путь просто именем файла (без
+    // директории)
+    if (strcmp(output_dir, ofile) != 0) {
+        // Если есть поддиректории, создаем их
+        if (create_output_directory_recursive(output_dir) != 0) {
+            fprintf(
+                stderr,
+                "[Error] Не удалось создать директорию '%s'\n",
+                output_dir
+            );
+
+            // Очистка памяти
+            bmp_free(image);
+            free_filter_list(filter_list);
+            free(ofile);
+
+            return 1;
+        }
     }
 
-    int save_result = bmp_save(result, ofile);
+    int save_result = bmp_save(image, ofile);
+
+    // Освобождаем память для ofile
+    free(ofile);
+
     if (save_result == ALL_OK) {
-        printf("Изображение успешно сохранено в '%s'!\n", ofile);
+        printf("[Success] Изображение успешно сохранено!\n");
     } else {
         fprintf(
             stderr,
             "[Error] Ошибка сохранения изображения (код: %d)\n",
             save_result
         );
+
+        // Очистка памяти
+        bmp_free(image);
+        free_filter_list(filter_list);
+
+        return 1;
     }
 
     // Очистка памяти
     bmp_free(image);
-    bmp_free(result);
-    kernel_free(w);
+    free_filter_list(filter_list);
 
     return ALL_OK;
 }

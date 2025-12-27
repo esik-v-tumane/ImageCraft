@@ -23,4 +23,4 @@ imagecraft
 *.un~
 
 # Прочее
-output.bmp
+test/

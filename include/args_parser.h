@@ -9,7 +9,7 @@ int parse_args(
     char** argv,
     char** ifile,
     char** ofile,
-    Filter* head
+    Filter** head
 );
 
 #endif // !ARGS_PARSER_H
