@@ -2,7 +2,6 @@
 #define ARGS_PARSER_H
 
 #include "filters.h"
-void printhelp();
 
 int parse_args(
     int argc,
@@ -11,5 +10,9 @@ int parse_args(
     char** ofile,
     Filter** head
 );
+
+void printhelp();
+
+void printversion();
 
 #endif // !ARGS_PARSER_H

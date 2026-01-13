@@ -2,22 +2,47 @@ ImageCraft - BMP Image Processor
 ===============================
 
 Использование:
-  imagecraft <input.bmp> [output.bmp
+  imagecraft <input.bmp> [output.bmp]
 
 Опции:
-  -h, --help           Показать это сообщение
-  -v, --version        Версия
-  -i, --info <file>    Информация о bmp файле
-  -g, --grayscale      Черно-белое
-  -r, --rotate <deg>   Повернуть на 90, 180, 270 градусов
-  -f, --flip <axis>    Отразить по горизонтали / вертикали
-  -c, --crop x y w h   Обрезать изображение
+    -help                Показать это сообщение
+    -version             Версия
+    -info <file>         Информация о bmp файле
+
+Фильтры:
+    -crop width height   Обрезка изображения
+    -gs                  Преобразование к черно-белым тонам
+    -neg                 Преобразование в негатив
+    -sharp               Повышение резкости
+    -edge threshold      Выделение границ с порогом threshold
+    -blur sigma          Гауссово размытие с параметром sigma
+    -med window          Фильтрация шума
 
 Примеры:
-  imagecraft input.bmp output.bmp
-  imagecraft --info sample.bmp
-  imagecraft -g -r 90 input.bmp rotated_gray.bmp
+    1. Обрезка 256x256 -> градации серого -> негатив
+
+    ./imagecraft assets/lenna.bmp output.bmp -crop 256 256 -gs -neg
+
+    2. Повышение резкости -> выделение границ -> обрезка 400x300
+
+    ./imagecraft assets/lenna.bmp output.bmp -sharp -edge 0.2 -crop 400 300
+
+    3. Размытие -> медианный фильтр -> негатив
+
+    ./imagecraft assets/lenna.bmp output.bmp -blur 1.5 -med 5 -neg
+
+    4. Обрезка 512x512 -> градации серого -> повышение резкости -> выделение границ
+
+    ./imagecraft assets/lenna.bmp output.bmp -crop 512 512 -gs -sharp -edge 0.15
+
+    5. Медианный фильтр -> размытие -> негатив -> обрезка 600x400
+
+    ./imagecraft assets/lenna.bmp output.bmp -med 3 -blur 0.8 -neg -crop 600 400
+
+    6. ОГРОМНЫЕ значения для -crop (100000x100000) -> градации серого
+
+    ./imagecraft assets/lenna.bmp output.bmp -crop 100000 100000 -gs
 
 Формат BMP:
-  - 24-битный BMP без сжатия
-  - Заголовок BITMAPINFOHEADER DIB
+    - 24-битный BMP без сжатия
+    - Заголовок BITMAPINFOHEADER DIB

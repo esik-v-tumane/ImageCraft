@@ -93,4 +93,6 @@ int bmp_is_valid_24bit(const char* filename);
 // Вывод информации о BMP изображении
 void bmp_print_info(const BMPImage* image);
 
+void printinfo(const char* filename);
+
 #endif // BMP_READER_H

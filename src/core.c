@@ -4,12 +4,11 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "args_parser.h"
+#include "args_assistant.h"
 #include "bmp.h"
 #include "core.h"
 #include "defines.h"
 #include "filters.h"
-#include "help.h"
 #include "paths.h"
 
 int imagecraft(int argc, char** argv) {
@@ -18,17 +17,31 @@ int imagecraft(int argc, char** argv) {
     int parse_result =
         parse_args(argc, argv, &ifile, &ofile, &filter_list);
 
-    if (parse_result != 0) {
-        fprintf(
-            stderr,
-            "[Error] Ошибка обработка аргументов. Adiós!\n"
-        );
-        exit(1);
+    switch (parse_result) {
+        case IC_ARGS_ASSISTANT_ERROR: {
+            fprintf(
+                stderr,
+                "[Error] Ошибка обработка аргументов. Adiós!\n"
+            );
+            exit(1);
+        }
+        case IC_ARGS_ASSISTANT_HELP: {
+            printhelp();
+            exit(0);
+        }
+        case IC_ARGS_ASSISTANT_VERSION: {
+            printversion();
+            exit(0);
+        }
+        case IC_ARGS_ASSISTANT_INFO: {
+            printinfo(ifile);
+            exit(0);
+        }
     }
 
-    if (argc == 1) {
+    if (argc < 3) {
         printhelp();
-        return 0;
+        exit(0);
     }
 
     int error;

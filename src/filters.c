@@ -447,7 +447,7 @@ int apply_filters(BMPImage** image, Filter* filter_list) {
         count++;
 
         switch (current->type) {
-            case FILTER_TYPE_CROP: {
+            case ARGV_TYPE_FILTER_CROP: {
                 int width = current->params[0];
                 int height = current->params[1];
                 BMPImage* cropped =
@@ -457,7 +457,7 @@ int apply_filters(BMPImage** image, Filter* filter_list) {
                     fprintf(
                         stderr,
                         "[Error] Не удалось применить "
-                        "фильтр " IC_FILTER_CROP "\n"
+                        "фильтр " IC_ARGV_FILTER_CROP "\n"
                     );
                     return -count;
                 }
@@ -467,43 +467,43 @@ int apply_filters(BMPImage** image, Filter* filter_list) {
                 break;
             }
 
-            case FILTER_TYPE_GS: {
+            case ARGV_TYPE_FILTER_GS: {
                 if (filter_grayscale(*image) != 0) {
                     fprintf(
                         stderr,
                         "[Error] Не удалось применить "
-                        "фильтр " IC_FILTER_GS " \n"
+                        "фильтр " IC_ARGV_FILTER_GS " \n"
                     );
                     return -count;
                 }
                 break;
             }
 
-            case FILTER_TYPE_NEG: {
+            case ARGV_TYPE_FILTER_NEG: {
                 if (filter_negative(*image) != 0) {
                     fprintf(
                         stderr,
                         "[Error] Не удалось применить "
-                        "фильтр " IC_FILTER_NEG "\n"
+                        "фильтр " IC_ARGV_FILTER_NEG "\n"
                     );
                     return -count;
                 }
                 break;
             }
 
-            case FILTER_TYPE_SHARP: {
+            case ARGV_TYPE_FILTER_SHARP: {
                 if (filter_sharpening(*image) != 0) {
                     fprintf(
                         stderr,
                         "[Error] Не удалось применить "
-                        "фильтр " IC_FILTER_SHARP "\n"
+                        "фильтр " IC_ARGV_FILTER_SHARP "\n"
                     );
                     return -count;
                 }
                 break;
             }
 
-            case FILTER_TYPE_EDGE: {
+            case ARGV_TYPE_FILTER_EDGE: {
                 float threshold = current->params[0] / 1000.0f;
                 BMPImage* edges =
                     filter_edge_detection(*image, threshold);
@@ -512,7 +512,7 @@ int apply_filters(BMPImage** image, Filter* filter_list) {
                     fprintf(
                         stderr,
                         "[Error] Не удалось применить "
-                        "фильтр " IC_FILTER_EDGE "\n"
+                        "фильтр " IC_ARGV_FILTER_EDGE "\n"
                     );
                     return -count;
                 }
@@ -522,7 +522,7 @@ int apply_filters(BMPImage** image, Filter* filter_list) {
                 break;
             }
 
-            case FILTER_TYPE_BLUR: {
+            case ARGV_TYPE_FILTER_BLUR: {
                 float sigma = current->params[0] / 1000.0f;
                 BMPImage* blurred =
                     filter_gaussian_blur(*image, sigma);
@@ -531,7 +531,7 @@ int apply_filters(BMPImage** image, Filter* filter_list) {
                     fprintf(
                         stderr,
                         "[Error] Не удалось применить "
-                        "фильтр " IC_FILTER_BLUR "-blur\n"
+                        "фильтр " IC_ARGV_FILTER_BLUR "-blur\n"
                     );
                     return -count;
                 }
@@ -541,7 +541,7 @@ int apply_filters(BMPImage** image, Filter* filter_list) {
                 break;
             }
 
-            case FILTER_TYPE_MED: {
+            case ARGV_TYPE_FILTER_MED: {
                 int window = current->params[0];
                 BMPImage* median = filter_median(*image, window);
 
@@ -549,7 +549,7 @@ int apply_filters(BMPImage** image, Filter* filter_list) {
                     fprintf(
                         stderr,
                         "[Error] Не удалось применить "
-                        "фильтр " IC_FILTER_MED "\n"
+                        "фильтр " IC_ARGV_FILTER_MED "\n"
                     );
                     return -count;
                 }

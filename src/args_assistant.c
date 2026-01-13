@@ -1,10 +1,9 @@
 #include <ctype.h>
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "args_parser.h"
+#include "args_assistant.h"
 #include "defines.h"
 #include "filters.h"
 
@@ -30,40 +29,6 @@ static int is_integer(const char* str) {
     }
 
     return 1; // Все символы - цифры
-}
-
-// Вспомогательная функция для проверки, является ли строка
-// числом с плавающей точкой
-static int is_float(const char* str) {
-    if (str == NULL || *str == '\0') {
-        return 0;
-    }
-
-    const char* p = str;
-    int has_digit = 0;
-    int has_dot = 0;
-
-    // Пропускаем знак
-    if (*p == '-' || *p == '+') {
-        p++;
-    }
-
-    // Проверяем цифры и точку
-    while (*p != '\0') {
-        if (isdigit(*p)) {
-            has_digit = 1;
-        } else if (*p == '.') {
-            if (has_dot) {
-                return 0; // Больше одной точки
-            }
-            has_dot = 1;
-        } else {
-            return 0; // Не цифра и не точка
-        }
-        p++;
-    }
-
-    return has_digit; // Должна быть хотя бы одна цифра
 }
 
 // Вспомогательная функция для создания нового фильтра
@@ -101,8 +66,33 @@ int parse_args(
         return 0; // Нет аргументов, только вызов программы
     }
 
-    // Первый аргумент - входной файл
+    // Если первый аргумент -help
+    if (strcmp(argv[1], IC_ARGV_HELP) == 0) {
+        return IC_ARGS_ASSISTANT_HELP; // печатай подсказку
+    } else if (strcmp(argv[1], IC_ARGV_VERSION) == 0) {
+        // или если -version
+        return IC_ARGS_ASSISTANT_VERSION; // печатай версию
+    }
+
+    // Если аргумент -info
+    if (strcmp(argv[1], IC_ARGV_INFO) == 0) {
+        if (argc > 2) {
+            *ifile = argv[2];
+            return IC_ARGS_ASSISTANT_INFO;
+        } else {
+            fprintf(
+                stderr,
+                "[Error] Не указан файл для чтения!\n"
+            );
+            return IC_ARGS_ASSISTANT_ERROR;
+        }
+    }
+
+    // Иначе первый аргумент - входной файл
     *ifile = argv[1];
+
+    // TODO: Добавить обработку -help, -version, -info в середине
+    // списка аргументов
 
     // Второй аргумент (если есть) - выходной файл
     if (argc >= 3 && argv[2][0] != '-') {
@@ -117,17 +107,17 @@ int parse_args(
     int start_index = (*ofile) ? 3 : 2;
 
     for (int i = start_index; i < argc; i++) {
-        if (strcmp(argv[i], IC_FILTER_CROP) == 0) {
+        if (strcmp(argv[i], IC_ARGV_FILTER_CROP) == 0) {
             // Проверяем, что есть достаточно аргументов
             if (i + 2 >= argc) {
                 fprintf(
                     stderr,
-                    "[Error] " IC_FILTER_CROP
+                    "[Error] " IC_ARGV_FILTER_CROP
                     " ожидает 2 аргумента: width, "
                     "height.\n"
                 );
                 // Освобождаем уже созданные фильтры при ошибке
-                return 1;
+                return IC_ARGS_ASSISTANT_ERROR;
             }
 
             // Проверяем, что аргументы - целые числа
@@ -135,7 +125,7 @@ int parse_args(
                 !is_integer(argv[i + 2])) {
                 fprintf(
                     stderr,
-                    "[Error] " IC_FILTER_CROP
+                    "[Error] " IC_ARGV_FILTER_CROP
                     " ожидает целые числа для "
                     "width и height\n"
                 );
@@ -146,7 +136,7 @@ int parse_args(
                     argv[i + 1],
                     argv[i + 2]
                 );
-                return 1;
+                return IC_ARGS_ASSISTANT_ERROR;
             }
 
             // Парсим ширину и высоту
@@ -160,13 +150,13 @@ int parse_args(
                     "[Error] Размеры для обрезки должны быть "
                     "положительными\n"
                 );
-                return 1;
+                return IC_ARGS_ASSISTANT_ERROR;
             }
 
             // Создаем фильтр обрезки
             int params[2] = { width, height };
             Filter* crop_filter =
-                create_filter(FILTER_TYPE_CROP, 2, params);
+                create_filter(ARGV_TYPE_FILTER_CROP, 2, params);
 
             if (!crop_filter) {
                 fprintf(
@@ -174,7 +164,7 @@ int parse_args(
                     "[Error] Не удалось выделить память для "
                     "фильтра\n"
                 );
-                return 1;
+                return IC_ARGS_ASSISTANT_ERROR;
             }
 
             // Добавляем в список
@@ -192,10 +182,10 @@ int parse_args(
             // Переходим к следующему фильтру
             i += 2; // Пропускаем обработанные аргументы
 
-        } else if (strcmp(argv[i], IC_FILTER_GS) == 0) {
+        } else if (strcmp(argv[i], IC_ARGV_FILTER_GS) == 0) {
             // Фильтр grayscale без параметров
             Filter* gs_filter =
-                create_filter(FILTER_TYPE_GS, 0, NULL);
+                create_filter(ARGV_TYPE_FILTER_GS, 0, NULL);
 
             // Добавляем в список
             if (*head == NULL) {
@@ -208,10 +198,10 @@ int parse_args(
                 current->next = gs_filter;
             }
 
-        } else if (strcmp(argv[i], IC_FILTER_NEG) == 0) {
+        } else if (strcmp(argv[i], IC_ARGV_FILTER_NEG) == 0) {
             // Фильтр negative без параметров
             Filter* neg_filter =
-                create_filter(FILTER_TYPE_NEG, 0, NULL);
+                create_filter(ARGV_TYPE_FILTER_NEG, 0, NULL);
 
             // Добавляем в список
             if (*head == NULL) {
@@ -224,10 +214,10 @@ int parse_args(
                 current->next = neg_filter;
             }
 
-        } else if (strcmp(argv[i], IC_FILTER_SHARP) == 0) {
+        } else if (strcmp(argv[i], IC_ARGV_FILTER_SHARP) == 0) {
             // Фильтр sharpening без параметров
             Filter* sharp_filter =
-                create_filter(FILTER_TYPE_SHARP, 0, NULL);
+                create_filter(ARGV_TYPE_FILTER_SHARP, 0, NULL);
 
             // Добавляем в список
             if (*head == NULL) {
@@ -240,16 +230,16 @@ int parse_args(
                 current->next = sharp_filter;
             }
 
-        } else if (strcmp(argv[i], IC_FILTER_EDGE) == 0) {
+        } else if (strcmp(argv[i], IC_ARGV_FILTER_EDGE) == 0) {
             // Фильтр edge detection с одним параметром
             if (i + 1 >= argc) {
                 fprintf(
                     stderr,
-                    "[Error] " IC_FILTER_EDGE
+                    "[Error] " IC_ARGV_FILTER_EDGE
                     " ожидает 1 аргумент: "
                     "threshold\n"
                 );
-                return 1;
+                return IC_ARGS_ASSISTANT_ERROR;
             }
 
             float threshold = atof(argv[i + 1]);
@@ -258,7 +248,7 @@ int parse_args(
             int threshold_int = (int)(threshold * 1000);
             int params[1] = { threshold_int };
             Filter* edge_filter =
-                create_filter(FILTER_TYPE_EDGE, 1, params);
+                create_filter(ARGV_TYPE_FILTER_EDGE, 1, params);
 
             // Добавляем в список
             if (*head == NULL) {
@@ -273,15 +263,15 @@ int parse_args(
 
             i += 1; // Пропускаем параметр
 
-        } else if (strcmp(argv[i], IC_FILTER_BLUR) == 0) {
+        } else if (strcmp(argv[i], IC_ARGV_FILTER_BLUR) == 0) {
             // Фильтр blur с одним параметром
             if (i + 1 >= argc) {
                 fprintf(
                     stderr,
-                    "[Error] " IC_FILTER_BLUR
+                    "[Error] " IC_ARGV_FILTER_BLUR
                     " ожидает 1 аргумент: sigma\n"
                 );
-                return 1;
+                return IC_ARGS_ASSISTANT_ERROR;
             }
 
             float sigma = atof(argv[i + 1]);
@@ -290,7 +280,7 @@ int parse_args(
             int sigma_int = (int)(sigma * 1000);
             int params[1] = { sigma_int };
             Filter* blur_filter =
-                create_filter(FILTER_TYPE_BLUR, 1, params);
+                create_filter(ARGV_TYPE_FILTER_BLUR, 1, params);
 
             // Добавляем в список
             if (*head == NULL) {
@@ -305,15 +295,15 @@ int parse_args(
 
             i += 1; // Пропускаем параметр
 
-        } else if (strcmp(argv[i], IC_FILTER_MED) == 0) {
+        } else if (strcmp(argv[i], IC_ARGV_FILTER_MED) == 0) {
             // Фильтр median с одним параметром
             if (i + 1 >= argc) {
                 fprintf(
                     stderr,
-                    "[Error] " IC_FILTER_MED
+                    "[Error] " IC_ARGV_FILTER_MED
                     " ожидает 1 аргумент: window\n"
                 );
-                return 1;
+                return IC_ARGS_ASSISTANT_ERROR;
             }
 
             int window = atoi(argv[i + 1]);
@@ -323,12 +313,12 @@ int parse_args(
                     "[Error] window должен быть положительным "
                     "нечетным числом\n"
                 );
-                return 1;
+                return IC_ARGS_ASSISTANT_ERROR;
             }
 
             int params[1] = { window };
             Filter* med_filter =
-                create_filter(FILTER_TYPE_MED, 1, params);
+                create_filter(ARGV_TYPE_FILTER_MED, 1, params);
 
             // Добавляем в список
             if (*head == NULL) {
@@ -349,7 +339,7 @@ int parse_args(
                 "[Error] Неизвестный фильтр: %s\n",
                 argv[i]
             );
-            return 1;
+            return IC_ARGS_ASSISTANT_ERROR;
         }
     }
 
@@ -363,4 +353,48 @@ void free_filter_list(Filter* head) {
         free(head);
         head = next;
     }
+}
+
+void printhelp() {
+    FILE* help_file = fopen(AUX_DIR SLASH HELP_MESSAGE, "r");
+    if (!help_file) {
+        // Если файл не найден, выводим встроенный help
+        printf("ImageCraft - BMP Image Processor\n");
+        printf(
+            "Использование: imagecraft <input.bmp> "
+            "[output.bmpG]\n"
+        );
+        printf(
+            "Используйте " IC_ARGV_HELP
+            " для большей информации\n"
+        );
+        return;
+    }
+
+    // Читаем и выводим файл построчно
+    char buffer[256];
+    while (fgets(buffer, sizeof(buffer), help_file)) {
+        printf("%s", buffer);
+    }
+
+    fclose(help_file);
+}
+
+void printversion() {
+    FILE* version_info =
+        fopen(AUX_DIR SLASH VERSION_MESSAGE, "r");
+    if (!version_info) {
+        // Если файл не найден, выводим встроенный version
+        printf("ImageCraft - BMP Image Processor\n");
+        printf("Still in maintainance");
+        return;
+    }
+
+    // Читаем и выводим файл построчно
+    char buffer[256];
+    while (fgets(buffer, sizeof(buffer), version_info)) {
+        printf("%s", buffer);
+    }
+
+    fclose(version_info);
 }

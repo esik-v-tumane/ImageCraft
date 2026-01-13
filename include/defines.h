@@ -8,12 +8,24 @@
 #define SLASH "/"
 #endif
 
+#define AUX_DIR "aux"
 #define SAVE_DIR "tmp"
 #define OUTFILE "output.bmp"
 
+// Внутренние программные файлы
+#define VERSION_MESSAGE ".version"
+#define HELP_MESSAGE "help"
+
+// Бинарные коды
 #define INDEX_WIDTH 0
 #define INDEX_HEIGHT 1 - INDEX_WIDTH
 
+// Аргументы командной строки (кроме фильтров)
+#define IC_ARGV_HELP "-help"
+#define IC_ARGV_VERSION "-version"
+#define IC_ARGV_INFO "-info"
+
+// Корректные коды возврата
 #define ALL_OK 0b0
 
 // Ошибки работы с файлами
@@ -33,6 +45,13 @@
 
 // Ошибки ядра
 #define IC_ERROR_KERNEL_FAILURE 0b100001;
+
+// Результаты обработки аргументов
+#define IC_ARGS_ASSISTANT_OK 0b00
+#define IC_ARGS_ASSISTANT_HELP 0b01
+#define IC_ARGS_ASSISTANT_VERSION 0b10
+#define IC_ARGS_ASSISTANT_INFO 0b11
+#define IC_ARGS_ASSISTANT_ERROR 0b100
 
 // Сообщения о сообщениях об ошибках
 #define IC_MESSAGE_ERROR_OPENING_FILE "IC_ERROR_OPENING_FILE"

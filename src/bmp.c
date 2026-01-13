@@ -534,3 +534,61 @@ void bmp_print_info(const BMPImage* image) {
     );
     printf("========================\n");
 }
+
+// Функция для вывода информации о BMP файле
+void printinfo(const char* filename) {
+    if (!filename) {
+        fprintf(stderr, "[Error] Не указано имя файла\n");
+        return;
+    }
+
+    // Проверка существования файла и его формата
+    int error = bmp_is_valid_24bit(filename);
+    if (error != 0) {
+        if (error == IC_ERROR_OPENING_FILE) {
+            fprintf(
+                stderr,
+                "[Error] Не удалось открыть файл '%s'\n",
+                filename
+            );
+        } else {
+            char* error_code;
+            if (error == IC_BMP_ERROR_NULL_FILENAME)
+                error_code = IC_MESSAGE_BMP_ERROR_NULL_FILENAME;
+            else if (error == IC_BMP_ERROR_INVALID_SIGNATURE)
+                error_code =
+                    IC_MESSAGE_BMP_ERROR_INVALID_SIGNATURE;
+            else if (error == IC_BMP_ERROR_INVALID_BPP)
+                error_code = IC_MESSAGE_BMP_ERROR_INVALID_BPP;
+            else // if (error == IC_BMP_ERROR_INVALID_DIB)
+                error_code = IC_MESSAGE_BMP_ERROR_INVALID_DIB;
+
+            fprintf(
+                stderr,
+                "[Error] Файл '%s' не является валидным "
+                "24-битным BMP (%s)\n",
+                filename,
+                error_code
+            );
+        }
+        return;
+    }
+
+    // Загружаем изображение для вывода информации
+    BMPImage* image = bmp_load(filename);
+    if (!image) {
+        fprintf(
+            stderr,
+            "[Error] Не удалось загрузить изображение '%s'\n",
+            filename
+        );
+        return;
+    }
+
+    // Выводим информацию о файле
+    printf("Информация о файле: %s\n", filename);
+    bmp_print_info(image);
+
+    // Освобождаем память
+    bmp_free(image);
+}

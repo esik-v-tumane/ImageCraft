@@ -142,8 +142,12 @@ clean-build: $(TARGET) clean-int
 clean-output:
 	rm -rf output.bmp
 
+# Очистка тестового запуска программы
+clean-test:
+	rm -rf test
+
 # Полная очистка проекта
-clean: clean-int clean-lsp clean-output
+clean: clean-int clean-lsp clean-output clean-test
 	rm -f $(TARGET)
 
 # Вывод справки
@@ -162,6 +166,7 @@ help:
 	@echo "  make clean-int               - удаление папки int/"
 	@echo "  make clean-lsp               - удаление LSP-файлов"
 	@echo "  make clean-build             - создание ./imagecraft и удаление int/"
+	@echo "  make clean-test              - удаление папки test/"
 	@echo "  make clean                   - полная очистка проекта"
 	@echo "  make help                    - вывод этой справки"
 	@echo ""
@@ -183,4 +188,5 @@ help:
 .PHONY: all build-release build-debug run run-debug \
         auto-format format check-format prepare \
         compile_commands.json bear-build compile_flags.txt \
-        clean-int clean-lsp clean-build clean help
+        clean-int clean-lsp clean-build clean-output clean \
+		help

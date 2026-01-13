@@ -7,23 +7,24 @@
 #define MAX_FILTER_PARAMS 3
 
 // Наименования фильтров
-#define IC_FILTER_CROP "-crop"
-#define IC_FILTER_GS "-gs"
-#define IC_FILTER_NEG "-neg"
-#define IC_FILTER_SHARP "-sharp"
-#define IC_FILTER_EDGE "-edge"
-#define IC_FILTER_BLUR "-blur"
-#define IC_FILTER_MED "-med"
+#define IC_ARGV_FILTER_CROP "-crop"
+#define IC_ARGV_FILTER_GS "-gs"
+#define IC_ARGV_FILTER_NEG "-neg"
+#define IC_ARGV_FILTER_SHARP "-sharp"
+#define IC_ARGV_FILTER_EDGE "-edge"
+#define IC_ARGV_FILTER_BLUR "-blur"
+#define IC_ARGV_FILTER_MED "-med"
 
-// Хеши фильтров (порядок важен!)
+// Хеши аргументов (порядок важен!)
 // TODO: Использовать настоящие хеш-функции
-#define FILTER_TYPE_CROP 1
-#define FILTER_TYPE_GS 2
-#define FILTER_TYPE_NEG 3
-#define FILTER_TYPE_SHARP 4
-#define FILTER_TYPE_EDGE 5
-#define FILTER_TYPE_BLUR 6
-#define FILTER_TYPE_MED 7
+#define ARGV_TYPE_INFO 0
+#define ARGV_TYPE_FILTER_CROP 1
+#define ARGV_TYPE_FILTER_GS 2
+#define ARGV_TYPE_FILTER_NEG 3
+#define ARGV_TYPE_FILTER_SHARP 4
+#define ARGV_TYPE_FILTER_EDGE 5
+#define ARGV_TYPE_FILTER_BLUR 6
+#define ARGV_TYPE_FILTER_MED 7
 
 typedef struct _Filter {
     int type;
