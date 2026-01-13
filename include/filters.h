@@ -14,6 +14,8 @@
 #define IC_ARGV_FILTER_EDGE "-edge"
 #define IC_ARGV_FILTER_BLUR "-blur"
 #define IC_ARGV_FILTER_MED "-med"
+#define IC_ARGV_FILTER_VIGNETTE "-vignette"
+#define IC_ARGV_FILTER_ZOOM "-zoomblur"
 
 // Хеши аргументов (порядок важен!)
 // TODO: Использовать настоящие хеш-функции
@@ -25,6 +27,8 @@
 #define ARGV_TYPE_FILTER_EDGE 5
 #define ARGV_TYPE_FILTER_BLUR 6
 #define ARGV_TYPE_FILTER_MED 7
+#define ARGV_TYPE_FILTER_VIGNETTE 8
+#define ARGV_TYPE_FILTER_ZOOM 9
 
 typedef struct _Filter {
     int type;
@@ -45,6 +49,17 @@ BMPImage*
 filter_edge_detection(BMPImage* image, float threshold);
 BMPImage* filter_gaussian_blur(BMPImage* image, float sigma);
 BMPImage* filter_median(BMPImage* image, int window);
+int filter_vignette(
+    BMPImage* image,
+    float intensity,
+    float radius
+);
+BMPImage* filter_zoom_blur(
+    BMPImage* image,
+    float center_x_ratio,
+    float center_y_ratio,
+    float amount
+);
 
 // Основная функция применения цепочки фильтров
 int apply_filters(BMPImage** image, Filter* filter_list);

@@ -116,6 +116,8 @@ int imagecraft(int argc, char** argv) {
         printf("[Info] Фильтры не применялись\n");
     }
 
+    printf("1\n");
+
     // Сохранение результата
     if (!ofile) {
         // Если выходной файл не указан, используем OUTFILE

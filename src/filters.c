@@ -428,6 +428,230 @@ BMPImage* filter_median(BMPImage* image, int window) {
     return result;
 }
 
+// Фильтр виньетки (vignette)
+int filter_vignette(
+    BMPImage* image,
+    float intensity,
+    float radius
+) {
+    if (!image || intensity < 0.0f || intensity > 1.0f ||
+        radius < 0.0f || radius > 1.0f) {
+        return 1;
+    }
+
+    int32_t width = image->info_header.width;
+    int32_t height = image->info_header.height;
+    int32_t abs_height = height < 0 ? -height : height;
+
+    // Вычисляем центр изображения
+    float center_x = width / 2.0f;
+    float center_y = abs_height / 2.0f;
+
+    // Максимальное расстояние от центра до угла (диагональ/2)
+    float max_distance =
+        sqrtf(center_x * center_x + center_y * center_y);
+    float vignette_radius = radius * max_distance;
+
+    // Интенсивность виньетки
+    float vignette_intensity = intensity;
+
+    for (int y = 0; y < abs_height; y++) {
+        for (int x = 0; x < width; x++) {
+            // Расстояние от текущей точки до центра
+            float dx = x - center_x;
+            float dy = y - center_y;
+            float distance = sqrtf(dx * dx + dy * dy);
+
+            // Вычисляем фактор виньетки (1.0 в центре,
+            // уменьшается к краям)
+            float vignette_factor;
+            if (distance < vignette_radius) {
+                // Внутри радиуса - линейное уменьшение
+                vignette_factor = 1.0f -
+                    (distance / vignette_radius) *
+                        vignette_intensity;
+            } else {
+                // За пределами радиуса - минимальное значение
+                vignette_factor = 1.0f - vignette_intensity;
+            }
+
+            // Гарантируем, что фактор не отрицательный
+            if (vignette_factor < 0.0f)
+                vignette_factor = 0.0f;
+
+            // Получаем текущий пиксель
+            RGBPixel pixel = bmp_get_pixel(image, x, y);
+
+            // Применяем виньетку (затемняем края)
+            float new_red = pixel.red * vignette_factor;
+            float new_green = pixel.green * vignette_factor;
+            float new_blue = pixel.blue * vignette_factor;
+
+            // Устанавливаем новый пиксель
+            bmp_set_pixel(
+                image,
+                x,
+                y,
+                clamp_float_to_uint8(new_red),
+                clamp_float_to_uint8(new_green),
+                clamp_float_to_uint8(new_blue)
+            );
+        }
+    }
+
+    return 0;
+}
+
+// Фильтр размытия при увеличении (zoom blur)
+BMPImage* filter_zoom_blur(
+    BMPImage* image,
+    float center_x_ratio,
+    float center_y_ratio,
+    float amount
+) {
+    if (!image || amount <= 0.0f || center_x_ratio < 0.0f ||
+        center_x_ratio > 1.0f || center_y_ratio < 0.0f ||
+        center_y_ratio > 1.0f) {
+        return NULL;
+    }
+
+    int32_t width = image->info_header.width;
+    int32_t height = image->info_header.height;
+    int32_t abs_height = height < 0 ? -height : height;
+
+    // Создаем копию изображения для результата
+    BMPImage* result = bmp_copy(image);
+    if (!result) {
+        return NULL;
+    }
+
+    // Вычисляем абсолютные координаты центра размытия
+    float center_x = center_x_ratio * (width - 1);
+    float center_y = center_y_ratio * (abs_height - 1);
+
+    // Количество шагов для имитации размытия
+    int steps = (int)fminf(20.0f, 5.0f * amount);
+    if (steps < 2)
+        steps = 2;
+
+    // Проходим по всем пикселям результата
+    for (int y = 0; y < abs_height; y++) {
+        for (int x = 0; x < width; x++) {
+            float total_red = 0.0f;
+            float total_green = 0.0f;
+            float total_blue = 0.0f;
+
+            // Направление от центра к текущему пикселю
+            float dx = x - center_x;
+            float dy = y - center_y;
+            float distance = sqrtf(dx * dx + dy * dy);
+
+            // Если пиксель находится в центре, копируем без
+            // изменений
+            if (distance < 0.5f) {
+                RGBPixel pixel = bmp_get_pixel(image, x, y);
+                bmp_set_pixel(
+                    result,
+                    x,
+                    y,
+                    pixel.red,
+                    pixel.green,
+                    pixel.blue
+                );
+                continue;
+            }
+
+            // Нормализуем направление
+            float dir_x = dx / distance;
+            float dir_y = dy / distance;
+
+            // Максимальное смещение для размытия
+            float max_offset = distance * amount * 0.05f;
+
+            // Вычисляем взвешенное среднее по нескольким точкам
+            // на луче
+            for (int i = 0; i < steps; i++) {
+                // Позиция на луче от центра к пикселю
+                float t = (float)i / (steps - 1);
+                float offset = t * max_offset;
+
+                // Координаты точки на луче
+                float sample_x =
+                    center_x + (distance - offset) * dir_x;
+                float sample_y =
+                    center_y + (distance - offset) * dir_y;
+
+                // Билинейная интерполяция
+                int x1 = (int)floorf(sample_x);
+                int y1 = (int)floorf(sample_y);
+                int x2 = x1 + 1;
+                int y2 = y1 + 1;
+
+                // Проверка границ
+                x1 = (x1 < 0) ? 0
+                              : (x1 >= width ? width - 1 : x1);
+                y1 = (y1 < 0)
+                    ? 0
+                    : (y1 >= abs_height ? abs_height - 1 : y1);
+                x2 = (x2 < 0) ? 0
+                              : (x2 >= width ? width - 1 : x2);
+                y2 = (y2 < 0)
+                    ? 0
+                    : (y2 >= abs_height ? abs_height - 1 : y2);
+
+                // Веса для билинейной интерполяции
+                float wx = sample_x - x1;
+                float wy = sample_y - y1;
+
+                // Получаем 4 соседних пикселя
+                RGBPixel p11 = bmp_get_pixel(image, x1, y1);
+                RGBPixel p21 = bmp_get_pixel(image, x2, y1);
+                RGBPixel p12 = bmp_get_pixel(image, x1, y2);
+                RGBPixel p22 = bmp_get_pixel(image, x2, y2);
+
+                // Интерполируем
+                float red = (1 - wx) * (1 - wy) * p11.red +
+                    wx * (1 - wy) * p21.red +
+                    (1 - wx) * wy * p12.red + wx * wy * p22.red;
+
+                float green = (1 - wx) * (1 - wy) * p11.green +
+                    wx * (1 - wy) * p21.green +
+                    (1 - wx) * wy * p12.green +
+                    wx * wy * p22.green;
+
+                float blue = (1 - wx) * (1 - wy) * p11.blue +
+                    wx * (1 - wy) * p21.blue +
+                    (1 - wx) * wy * p12.blue +
+                    wx * wy * p22.blue;
+
+                // Вес убывает от центра к краю
+                float weight = 1.0f - t * 0.5f;
+
+                total_red += red * weight;
+                total_green += green * weight;
+                total_blue += blue * weight;
+            }
+
+            // Усредняем результат
+            float avg_red = total_red / steps;
+            float avg_green = total_green / steps;
+            float avg_blue = total_blue / steps;
+
+            // Устанавливаем итоговый пиксель
+            bmp_set_pixel(
+                result,
+                x,
+                y,
+                clamp_float_to_uint8(avg_red),
+                clamp_float_to_uint8(avg_green),
+                clamp_float_to_uint8(avg_blue)
+            );
+        }
+    }
+
+    return result;
+}
+
 // ==================== ОСНОВНАЯ ФУНКЦИЯ ПРИМЕНЕНИЯ ФИЛЬТРОВ
 // ====================
 
@@ -556,6 +780,79 @@ int apply_filters(BMPImage** image, Filter* filter_list) {
 
                 bmp_free(*image);
                 *image = median;
+                break;
+            }
+
+                /*
+                 *
+                 * TODO: Проблема с сохранением файлов для
+                 * -vignette и -zoomblur
+                 *
+                 */
+
+            case ARGV_TYPE_FILTER_VIGNETTE: {
+                printf("[Debug] Applying VIGNETTE filter\n");
+
+                if (current->param_count < 2) {
+                    fprintf(
+                        stderr,
+                        "[Error] Vignette filter requires 2 "
+                        "parameters\n"
+                    );
+                    return -count;
+                }
+
+                float intensity = current->params[0] / 1000.0f;
+                float radius = current->params[1] / 1000.0f;
+
+                if (filter_vignette(*image, intensity, radius) !=
+                    0) {
+                    fprintf(
+                        stderr,
+                        "[Error] Failed to apply vignette "
+                        "filter\n"
+                    );
+                    return -count;
+                }
+
+                // Виньетка работает in-place, размеры не
+                // меняются
+                printf(
+                    "[Debug] Vignette applied in-place. Image "
+                    "size unchanged: %dx%d\n",
+                    (*image)->info_header.width,
+                    (*image)->info_header.height
+                );
+                break;
+            }
+
+            case ARGV_TYPE_FILTER_ZOOM: {
+                // Zoom blur ожидает 3 параметра: center_x_ratio,
+                // center_y_ratio, amount
+                float center_x =
+                    current->params[0] / 1000.0f; // 0.0 - 1.0
+                float center_y =
+                    current->params[1] / 1000.0f; // 0.0 - 1.0
+                float amount = current->params[2] /
+                    1000.0f; // положительное число
+
+                BMPImage* zoomed = filter_zoom_blur(
+                    *image,
+                    center_x,
+                    center_y,
+                    amount
+                );
+                if (!zoomed) {
+                    fprintf(
+                        stderr,
+                        "[Error] Не удалось применить "
+                        "фильтр " IC_ARGV_FILTER_ZOOM "\n"
+                    );
+                    return -count;
+                }
+
+                bmp_free(*image);
+                *image = zoomed;
                 break;
             }
 

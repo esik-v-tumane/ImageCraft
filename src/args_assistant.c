@@ -31,6 +31,40 @@ static int is_integer(const char* str) {
     return 1; // Все символы - цифры
 }
 
+// Вспомогательная функция для проверки, является ли строка
+// числом с плавающей точкой
+static int is_float(const char* str) {
+    if (str == NULL || *str == '\0') {
+        return 0;
+    }
+
+    const char* p = str;
+    int has_digit = 0;
+    int has_dot = 0;
+
+    // Пропускаем знак
+    if (*p == '-' || *p == '+') {
+        p++;
+    }
+
+    // Проверяем цифры и точку
+    while (*p != '\0') {
+        if (isdigit(*p)) {
+            has_digit = 1;
+        } else if (*p == '.') {
+            if (has_dot) {
+                return 0; // Больше одной точки
+            }
+            has_dot = 1;
+        } else {
+            return 0; // Не цифра и не точка
+        }
+        p++;
+    }
+
+    return has_digit; // Должна быть хотя бы одна цифра
+}
+
 // Вспомогательная функция для создания нового фильтра
 static Filter*
 create_filter(int type, int param_count, int params[]) {
@@ -333,10 +367,135 @@ int parse_args(
 
             i += 1; // Пропускаем параметр
 
+        } else if (strcmp(argv[i], IC_ARGV_FILTER_VIGNETTE) ==
+                   0) {
+            // Фильтр vignette с двумя параметрами
+            if (i + 2 >= argc) {
+                fprintf(
+                    stderr,
+                    "[Error] " IC_ARGV_FILTER_VIGNETTE
+                    " ожидает 2 аргумента: intensity (0.0-1.0), "
+                    "radius (0.0-1.0)\n"
+                );
+                return IC_ARGS_ASSISTANT_ERROR;
+            }
+
+            // Проверяем, что аргументы - числа с плавающей
+            // точкой
+            if (!is_float(argv[i + 1]) ||
+                !is_float(argv[i + 2])) {
+                fprintf(
+                    stderr,
+                    "[Error] " IC_ARGV_FILTER_VIGNETTE
+                    " ожидает числа с плавающей точкой\n"
+                );
+                return IC_ARGS_ASSISTANT_ERROR;
+            }
+
+            float intensity = atof(argv[i + 1]);
+            float radius = atof(argv[i + 2]);
+
+            // Проверка диапазонов
+            if (intensity < 0.0f || intensity > 1.0f ||
+                radius < 0.0f || radius > 1.0f) {
+                fprintf(
+                    stderr,
+                    "[Error] Параметры vignette должны быть в "
+                    "диапазоне [0.0, 1.0]\n"
+                );
+                return IC_ARGS_ASSISTANT_ERROR;
+            }
+
+            // Сохраняем параметры (умножаем на 1000 для
+            // точности)
+            int params[2] = { (int)(intensity * 1000),
+                              (int)(radius * 1000) };
+
+            Filter* vignette_filter = create_filter(
+                ARGV_TYPE_FILTER_VIGNETTE,
+                2,
+                params
+            );
+
+            // Добавляем в список
+            if (*head == NULL) {
+                *head = vignette_filter;
+            } else {
+                Filter* current = *head;
+                while (current->next) {
+                    current = current->next;
+                }
+                current->next = vignette_filter;
+            }
+
+            i += 2; // Пропускаем параметры
+
+        } else if (strcmp(argv[i], IC_ARGV_FILTER_ZOOM) == 0) {
+            // Фильтр zoom blur с тремя параметрами
+            if (i + 3 >= argc) {
+                fprintf(
+                    stderr,
+                    "[Error] " IC_ARGV_FILTER_ZOOM
+                    " ожидает 3 аргумента: center_x (0.0-1.0), "
+                    "center_y (0.0-1.0), amount (>0.0)\n"
+                );
+                return IC_ARGS_ASSISTANT_ERROR;
+            }
+
+            // Проверяем, что аргументы - числа с плавающей
+            // точкой
+            if (!is_float(argv[i + 1]) ||
+                !is_float(argv[i + 2]) ||
+                !is_float(argv[i + 3])) {
+                fprintf(
+                    stderr,
+                    "[Error] " IC_ARGV_FILTER_ZOOM
+                    " ожидает числа с плавающей точкой\n"
+                );
+                return IC_ARGS_ASSISTANT_ERROR;
+            }
+
+            float center_x = atof(argv[i + 1]);
+            float center_y = atof(argv[i + 2]);
+            float amount = atof(argv[i + 3]);
+
+            // Проверка диапазонов
+            if (center_x < 0.0f || center_x > 1.0f ||
+                center_y < 0.0f || center_y > 1.0f ||
+                amount <= 0.0f) {
+                fprintf(
+                    stderr,
+                    "[Error] center_x, center_y должны быть в "
+                    "[0.0, 1.0], amount должен быть > 0.0\n"
+                );
+                return IC_ARGS_ASSISTANT_ERROR;
+            }
+
+            // Сохраняем параметры
+            int params[3] = { (int)(center_x * 1000),
+                              (int)(center_y * 1000),
+                              (int)(amount * 1000) };
+
+            Filter* zoom_filter =
+                create_filter(ARGV_TYPE_FILTER_ZOOM, 3, params);
+
+            // Добавляем в список
+            if (*head == NULL) {
+                *head = zoom_filter;
+            } else {
+                Filter* current = *head;
+                while (current->next) {
+                    current = current->next;
+                }
+                current->next = zoom_filter;
+            }
+
+            i += 3; // Пропускаем параметры
+
         } else {
             fprintf(
                 stderr,
-                "[Error] Неизвестный фильтр: %s\n",
+                "[Error] Неизвестный фильтр %s\n",
                 argv[i]
             );
             return IC_ARGS_ASSISTANT_ERROR;
