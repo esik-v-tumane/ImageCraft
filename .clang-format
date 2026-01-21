@@ -4,7 +4,6 @@ UseTab: Never
 IndentWidth: 4
 ColumnLimit: 65
 
-# =========== КЛЮЧЕВЫЕ НАСТРОЙКИ ДЛЯ МАССИВОВ ===========
 BinPackParameters: false
 BinPackArguments: false
 AllowAllParametersOfDeclarationOnNextLine: false
@@ -13,11 +12,9 @@ PenaltyBreakBeforeFirstCallParameter: 1000
 Cpp11BracedListStyle: false
 BreakConstructorInitializers: BeforeColon
 
-# =========== ИСПРАВЛЕНИЕ ВЫРАВНИВАНИЯ ===========
-AlignAfterOpenBracket: BlockIndent  # <-- ИЗМЕНЕНИЕ ЗДЕСЬ!
+AlignAfterOpenBracket: BlockIndent
 ContinuationIndentWidth: 4
 
-# Остальные настройки
 BreakBeforeBinaryOperators: None
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: false

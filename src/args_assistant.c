@@ -333,6 +333,60 @@ int parse_args(
 
             i += 1; // Пропускаем параметр
 
+        } else if (strcmp(argv[i], IC_ARGV_FILTER_CRYSTAL) == 0) {
+            // Фильтр crystallize с тремя параметрами: center_x, center_y, radius
+            if (i + 3 >= argc) {
+                fprintf(
+                    stderr,
+                    "[Error] " IC_ARGV_FILTER_CRYSTAL
+                    " ожидает 3 аргумента: center_x, center_y, radius\n"
+                );
+                return IC_ARGS_ASSISTANT_ERROR;
+            }
+
+            float center_x = atof(argv[i + 1]);
+            float center_y = atof(argv[i + 2]);
+            float radius = atof(argv[i + 3]);
+
+            if (radius <= 0) {
+                fprintf(
+                    stderr,
+                    "[Error] radius должен быть положительным числом\n"
+                );
+                return IC_ARGS_ASSISTANT_ERROR;
+            }
+
+            // Сохраняем как целые (умножаем на 1000 для точности)
+            int params[3] = {
+                (int)(center_x * 1000),
+                (int)(center_y * 1000),
+                (int)(radius * 1000)
+            };
+            Filter* crystal_filter =
+                create_filter(ARGV_TYPE_FILTER_CRYSTAL, 3, params);
+
+            if (!crystal_filter) {
+                fprintf(
+                    stderr,
+                    "[Error] Не удалось выделить память для "
+                    "фильтра\n"
+                );
+                return IC_ARGS_ASSISTANT_ERROR;
+            }
+
+            // Добавляем в список
+            if (*head == NULL) {
+                *head = crystal_filter;
+            } else {
+                Filter* current = *head;
+                while (current->next) {
+                    current = current->next;
+                }
+                current->next = crystal_filter;
+            }
+
+            i += 3; // Пропускаем обработанные аргументы
+
         } else {
             fprintf(
                 stderr,

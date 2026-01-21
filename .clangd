@@ -1,21 +1,16 @@
-# .clangd
 CompileFlags:
-  # Если проект использует compile_commands.json или compile_flags.txt,
-  # эта секция игнорируется. Оставляем её пустой или удаляем.
   Add: []
 
 Diagnostics:
   ClangTidy:
-    # Включить дополнительные проверки через clang-tidy
     Checks: ['bugprone-*', 'performance-*', 'readability-*']
-    # Игнорировать конкретное предупреждение в проекте
     WarningsAsErrors: []
   Suppress:
-    - '*bmp_reader.h' # Игнорировать все диагностики в этом файле (если нужно)
-    - 'bugprone-reserved-identifier' # Игнорировать конкретную проверку
+    - '*bmp_reader.h'
+    - 'bugprone-reserved-identifier'
 
 Hover:
-  ShowAKA: true # Показывать typedef'ы
+  ShowAKA: true
 
 Index:
-  Background: Skip # Отключить фоновое индексирование, если проект большой
+  Background: Skip

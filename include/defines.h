@@ -9,7 +9,7 @@
 #endif
 
 #define AUX_DIR "aux"
-#define SAVE_DIR "tmp"
+#define SAVE_DIR ""
 #define OUTFILE "output.bmp"
 
 // Внутренние программные файлы

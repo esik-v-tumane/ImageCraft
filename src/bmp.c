@@ -529,7 +529,7 @@ void bmp_print_info(const BMPImage* image) {
                                       : "top-to-bottom"
     );
     printf(
-        "Memory used: %lu bytes\n",
+        "Memory used: %llu bytes\n",
         abs_height * image->info_header.width * sizeof(RGBPixel)
     );
     printf("========================\n");

@@ -14,6 +14,7 @@
 #define IC_ARGV_FILTER_EDGE "-edge"
 #define IC_ARGV_FILTER_BLUR "-blur"
 #define IC_ARGV_FILTER_MED "-med"
+#define IC_ARGV_FILTER_CRYSTAL "-crystal"
 
 // Хеши аргументов (порядок важен!)
 // TODO: Использовать настоящие хеш-функции
@@ -25,6 +26,7 @@
 #define ARGV_TYPE_FILTER_EDGE 5
 #define ARGV_TYPE_FILTER_BLUR 6
 #define ARGV_TYPE_FILTER_MED 7
+#define ARGV_TYPE_FILTER_CRYSTAL 8
 
 typedef struct _Filter {
     int type;
@@ -45,6 +47,7 @@ BMPImage*
 filter_edge_detection(BMPImage* image, float threshold);
 BMPImage* filter_gaussian_blur(BMPImage* image, float sigma);
 BMPImage* filter_median(BMPImage* image, int window);
+BMPImage* filter_crystallize(BMPImage* image, float center_x, float center_y, float radius);
 
 // Основная функция применения цепочки фильтров
 int apply_filters(BMPImage** image, Filter* filter_list);

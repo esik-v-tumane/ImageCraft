@@ -143,6 +143,24 @@ int imagecraft(int argc, char** argv) {
     // Извлекаем директорию из пути и создаем её
     char* output_dir = get_directory_from_path(ofile);
 
+    // Если в пути есть директория — создаём её рекурсивно
+    if (output_dir != NULL && strcmp(output_dir, ofile) != 0) {
+        if (create_output_directory_recursive(output_dir) != 0) {
+            fprintf(
+                stderr,
+                "[Error] Не удалось создать директорию '%s'\n",
+                output_dir
+            );
+
+            // Очистка памяти
+            bmp_free(image);
+            free_filter_list(filter_list);
+            free(ofile);
+
+            return 1;
+        }
+    }
+    /*
     // Проверяем, не является ли путь просто именем файла (без
     // директории)
     if (strcmp(output_dir, ofile) != 0) {
@@ -162,6 +180,7 @@ int imagecraft(int argc, char** argv) {
             return 1;
         }
     }
+    */
 
     int save_result = bmp_save(image, ofile);
 

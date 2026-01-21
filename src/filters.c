@@ -188,7 +188,7 @@ filter_edge_detection(BMPImage* image, float threshold) {
     if (!gray_image) {
         return NULL;
     }
-
+    
     filter_grayscale(gray_image);
 
     // Матрица для выделения границ
@@ -428,6 +428,147 @@ BMPImage* filter_median(BMPImage* image, int window) {
     return result;
 }
 
+// Структура для хранения центра ячейки и среднего цвета
+typedef struct {
+    float center_x;
+    float center_y;
+    float sum_r, sum_g, sum_b;
+    int count;
+} CrystalCell;
+
+// Простая хеш-функция для генерации псевдослучайных чисел
+static float pseudo_random(int seed) {
+    seed = ((seed << 13) ^ seed) & 0x7FFFFFFF;
+    return ((seed * (seed * seed * 15731 + 789221) + 1376312589) & 0x7FFFFFFF) / 2147483648.0f;
+}
+
+// Фильтр кристаллизации (Crystallize)
+BMPImage* filter_crystallize(BMPImage* image, float center_x, float center_y, float radius) {
+    if (!image || radius <= 0) {
+        return NULL;
+    }
+
+    BMPImage* result = bmp_create(image->info_header.width, image->info_header.height);
+    if (!result) {
+        return NULL;
+    }
+
+    int32_t width = image->info_header.width;
+    int32_t height = image->info_header.height;
+    int32_t abs_height = height < 0 ? -height : height;
+
+    // Если центр не указан, используем центр изображения
+    if (center_x < 0) center_x = width / 2.0f;
+    if (center_y < 0) center_y = abs_height / 2.0f;
+
+    // Вычисляем размер сетки ячеек на основе радиуса
+    int cell_size = (int)(radius * 2.0f);
+    if (cell_size < 2) cell_size = 2;
+    
+    // Количество ячеек по горизонтали и вертикали
+    int cells_x = (width + cell_size - 1) / cell_size + 1;
+    int cells_y = (abs_height + cell_size - 1) / cell_size + 1;
+    
+    // Выделяем память для ячеек
+    CrystalCell* cells = (CrystalCell*)calloc(cells_x * cells_y, sizeof(CrystalCell));
+    if (!cells) {
+        bmp_free(result);
+        return NULL;
+    }
+
+    // Инициализируем центры ячеек с небольшими случайными смещениями
+    for (int cy = 0; cy < cells_y; cy++) {
+        for (int cx = 0; cx < cells_x; cx++) {
+            int idx = cy * cells_x + cx;
+            float base_x = cx * cell_size;
+            float base_y = cy * cell_size;
+            
+            // Добавляем случайное смещение для более естественного вида
+            float offset_x = (pseudo_random(cx * 1000 + cy) - 0.5f) * cell_size * 0.3f;
+            float offset_y = (pseudo_random(cy * 1000 + cx) - 0.5f) * cell_size * 0.3f;
+            
+            cells[idx].center_x = base_x + offset_x;
+            cells[idx].center_y = base_y + offset_y;
+            cells[idx].sum_r = 0;
+            cells[idx].sum_g = 0;
+            cells[idx].sum_b = 0;
+            cells[idx].count = 0;
+        }
+    }
+
+    // Первый проход: собираем цвета пикселей для каждой ячейки
+    for (int y = 0; y < abs_height; y++) {
+        for (int x = 0; x < width; x++) {
+            // Находим ближайший центр ячейки
+            float min_dist = 1e10f;
+            int nearest_idx = 0;
+            
+            for (int cy = 0; cy < cells_y; cy++) {
+                for (int cx = 0; cx < cells_x; cx++) {
+                    int idx = cy * cells_x + cx;
+                    float dx = x - cells[idx].center_x;
+                    float dy = y - cells[idx].center_y;
+                    float dist = dx * dx + dy * dy;
+                    
+                    if (dist < min_dist) {
+                        min_dist = dist;
+                        nearest_idx = idx;
+                    }
+                }
+            }
+            
+            // Добавляем цвет пикселя к ячейке
+            RGBPixel pixel = bmp_get_pixel(image, x, y);
+            cells[nearest_idx].sum_r += pixel.red;
+            cells[nearest_idx].sum_g += pixel.green;
+            cells[nearest_idx].sum_b += pixel.blue;
+            cells[nearest_idx].count++;
+        }
+    }
+
+    // Вычисляем средние цвета для каждой ячейки
+    for (int i = 0; i < cells_x * cells_y; i++) {
+        if (cells[i].count > 0) {
+            cells[i].sum_r /= cells[i].count;
+            cells[i].sum_g /= cells[i].count;
+            cells[i].sum_b /= cells[i].count;
+        }
+    }
+
+    // Второй проход: заполняем результат средними цветами ячеек
+    for (int y = 0; y < abs_height; y++) {
+        for (int x = 0; x < width; x++) {
+            // Находим ближайший центр ячейки
+            float min_dist = 1e10f;
+            int nearest_idx = 0;
+            
+            for (int cy = 0; cy < cells_y; cy++) {
+                for (int cx = 0; cx < cells_x; cx++) {
+                    int idx = cy * cells_x + cx;
+                    float dx = x - cells[idx].center_x;
+                    float dy = y - cells[idx].center_y;
+                    float dist = dx * dx + dy * dy;
+                    
+                    if (dist < min_dist) {
+                        min_dist = dist;
+                        nearest_idx = idx;
+                    }
+                }
+            }
+            
+            // Используем средний цвет ячейки
+            uint8_t r = (uint8_t)cells[nearest_idx].sum_r;
+            uint8_t g = (uint8_t)cells[nearest_idx].sum_g;
+            uint8_t b = (uint8_t)cells[nearest_idx].sum_b;
+            
+            bmp_set_pixel(result, x, y, r, g, b);
+        }
+    }
+
+    free(cells);
+    return result;
+}
+
 // ==================== ОСНОВНАЯ ФУНКЦИЯ ПРИМЕНЕНИЯ ФИЛЬТРОВ
 // ====================
 
@@ -556,6 +697,26 @@ int apply_filters(BMPImage** image, Filter* filter_list) {
 
                 bmp_free(*image);
                 *image = median;
+                break;
+            }
+
+            case ARGV_TYPE_FILTER_CRYSTAL: {
+                float center_x = current->params[0] / 1000.0f;
+                float center_y = current->params[1] / 1000.0f;
+                float radius = current->params[2] / 1000.0f;
+                BMPImage* crystallized = filter_crystallize(*image, center_x, center_y, radius);
+
+                if (!crystallized) {
+                    fprintf(
+                        stderr,
+                        "[Error] Не удалось применить "
+                        "фильтр " IC_ARGV_FILTER_CRYSTAL "\n"
+                    );
+                    return -count;
+                }
+
+                bmp_free(*image);
+                *image = crystallized;
                 break;
             }
 
