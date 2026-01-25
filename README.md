@@ -32,9 +32,9 @@
 | Этап сборки | Windows | Linux |
 |---|---|---|
 | 1. Сборка проекта | MinGW: `mingw32-make`<br>Cygwin: `make` | `make` |
-| 2. Запуск программы | `./imagecraft.exe` | `./imagecraft` |
+| 2. Запуск программы | `imagecraft.exe` | `./imagecraft` |
 
-Для ОС Windows при работе с MinGW следует использовать `mingw32-make`, иначе `make`. Для запуска программы использовать `./imagecraft.exe`.
+Для ОС Windows при работе с MinGW следует использовать `mingw32-make`, иначе `make`. Для запуска программы использовать `imagecraft.exe`.
 
 ## О программе
 
