@@ -5,18 +5,19 @@ ImageCraft - BMP Image Processor
   imagecraft <input.bmp> [output.bmp]
 
 Опции:
-    -help                Показать это сообщение
-    -version             Версия
-    -info <file>         Информация о bmp файле
+    -help                   Показать это сообщение
+    -version                Версия
+    -info <file>            Информация о bmp файле
 
 Фильтры:
-    -crop width height   Обрезка изображения
-    -gs                  Преобразование к черно-белым тонам
-    -neg                 Преобразование в негатив
-    -sharp               Повышение резкости
-    -edge threshold      Выделение границ с порогом threshold
-    -blur sigma          Гауссово размытие с параметром sigma
-    -med window          Фильтрация шума
+    -crop width height      Обрезка изображения
+    -gs                     Преобразование к черно-белым тонам
+    -neg                    Преобразование в негатив
+    -sharp                  Повышение резкости
+    -edge threshold         Выделение границ с порогом threshold
+    -blur sigma             Гауссово размытие с параметром sigma
+    -med window             Фильтрация шума
+    -crystal x y radius     Кристаллизация с центром (x, y) и радиусом radius
 
 Примеры:
     1. Обрезка 256x256 -> градации серого -> негатив
@@ -42,6 +43,10 @@ ImageCraft - BMP Image Processor
     6. ОГРОМНЫЕ значения для -crop (100000x100000) -> градации серого
 
     ./imagecraft assets/lenna.bmp output.bmp -crop 100000 100000 -gs
+
+    7. Кристаллизация
+
+    ./imagecraft assets/lenna.bmp output.bmp -crystal 5 10 40
 
 Формат BMP:
     - 24-битный BMP без сжатия
