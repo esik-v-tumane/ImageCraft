@@ -8,7 +8,7 @@
 #define SLASH "/"
 #endif
 
-#define AUX_DIR "aux"
+#define AUX_DIR "auxiliary"
 #define SAVE_DIR ""
 #define OUTFILE "output.bmp"
 
